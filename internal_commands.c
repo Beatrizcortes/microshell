@@ -7,6 +7,8 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <dirent.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "parser.h"
 #include "internal_commands.h"
@@ -29,7 +31,7 @@ void execute_internal_command(command * C, char inid[])
 				else if(strcmp(C->argv[0],"mycat")==0)
 				    mycat(C);
 				    else if(strcmp(C->argv[0],"myls")==0)
-					myls(C);
+					myls(C,inid);
 					else
 			    		    printf("Unknown command\n");
 }
@@ -84,7 +86,6 @@ void mycd(command *C, char inid[])
 //Changes working directory to argumet. If no argument is given,
 //it'll return to initial working directory
 	int status;
-	//char* dir;
 
 	if(C->argv[1]==NULL) //if there's no argument...
 	{
@@ -191,13 +192,16 @@ void mycat(command * C)
 	}
 }
 
-void myls(command * C)
+void myls(command * C, char inid[])
 {
 //Lists entries of directory specified
 //If there's no directory specified, uses current
 //If -l is entered, more info is displayed
 	bool l;//if there's -l or not
+	char *path=inid;//dir path, stats at current
+	char filePath[1024]; //for -l, get full path + file
 	DIR *pDir;
+	struct stat buf;
 	struct dirent *pDirent;//structure of dir
 	if(C->argv[1]!=NULL)//are there args?
 	{
@@ -207,11 +211,15 @@ void myls(command * C)
 			if(C->argv[2]==NULL)//no dir given
 				pDir = opendir(".");
 			else//dir given
+			{
+				path = C->argv[2];
 				pDir = opendir(C->argv[2]);
+			}
 		}
 		else //first arg is dir
 		{
 			pDir = opendir(C->argv[1]);
+			path = C->argv[1];
 			if(C->argv[2]==NULL)//no ls given
 				l = false;
 			else
@@ -228,16 +236,55 @@ void myls(command * C)
 			l = false;
 			pDir = opendir(".");//opens current directory
 	}
-	if (pDir == NULL)
-		printf("Cannot open directory\n");
-	else
+	//after deciding if -l and opening dir, display
+	if(l)//if -l is there
 	{
-		while((pDirent = readdir(pDir)) != NULL)
+		if (pDir == NULL)
+			printf("Cannot open directory\n");
+		else
 		{
-			printf("[%s] ", pDirent->d_name);
+			while((pDirent = readdir(pDir)) != NULL)
+			{
+				sprintf(filePath, "%s/%s",path,pDirent->d_name);
+				//printf("%s\n",filePath);
+				if(stat(filePath,&buf) ==-1)//get stat structure of file
+					perror("Error: ");
+				else
+				{
+					printf("%s ", pDirent->d_name);//print name
+					printf((S_ISDIR(buf.st_mode)) ? "d" : "-");//is dir?
+					printf((buf.st_mode & S_IRUSR) ? "r" : "-");//owner reading
+					printf((buf.st_mode & S_IWUSR) ? "w" : "-");//owner writing
+					printf((buf.st_mode & S_IXUSR) ? "x" : "-");//owner execute
+					printf((buf.st_mode & S_IRGRP) ? "r" : "-");//group reading
+					printf((buf.st_mode & S_IWGRP) ? "w" : "-");//group writing
+					printf((buf.st_mode & S_IXGRP) ? "x" : "-");//group execute
+					printf((buf.st_mode & S_IROTH) ? "r" : "-");//others reading
+					printf((buf.st_mode & S_IWOTH) ? "w" : "-");//others writing
+					printf((buf.st_mode & S_IXOTH) ? "x" : "-");//others execute
+					printf(" %d",buf.st_uid);//UID of owner
+					printf(" %d",buf.st_gid);//GID of owner
+					printf(" %ld",buf.st_size);//size <- check
+					printf(" %s",ctime(&buf.st_mtim.tv_sec));//modification date
+				}
+				
+			}
 		}
-	printf("\n");
-	closedir(pDir);
+		
 	}
+	else//only display names
+	{
+		if (pDir == NULL)
+			printf("Cannot open directory\n");
+		else
+		{
+			while((pDirent = readdir(pDir)) != NULL)
+			{
+				printf("%s ", pDirent->d_name);
+			}
+		printf("\n");
+		}
+	}
+	closedir(pDir);//close directory whenever finished
 }
 

@@ -18,5 +18,5 @@ void mycd(command * C, char inid[]);
 void mycp(command * C);
 void myrm(command * C);
 void mycat(command * C);
-void myls(command * C);
+void myls(command * C, char inid[]);
 #endif // _INTERNAL_COMMANDS_H_

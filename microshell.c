@@ -42,7 +42,7 @@ int main ()
 	    	}
 	    	else
 	    	{
-            	    show_command (&C);
+            	    //show_command (&C);
 	    	    execute_internal_command(&C,inid);//pass comand and initial path
 		    //I could have made that path global but memory was unassigned
 	    	}
