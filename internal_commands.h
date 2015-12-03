@@ -8,16 +8,15 @@
 #include <stdio.h>
 #include "parser.h"
 
-extern char* inid;//initial directory will be stored here globaly
+//extern char inid[256];//initial directory will be stored here globaly
 
-void execute_internal_command(command * C);
+void execute_internal_command(command * C, char inid[]);
 void mypwd();
 void mymkdir(command * C);
 void myrmdir(command * C);
-void mycd(command * C);
+void mycd(command * C, char inid[]);
 void mycp(command * C);
 void myrm(command * C);
 void mycat(command * C);
 void myls(command * C);
-char* getpwd();
 #endif // _INTERNAL_COMMANDS_H_

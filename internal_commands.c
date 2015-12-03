@@ -11,9 +11,7 @@
 #include "parser.h"
 #include "internal_commands.h"
 
-char* inid;//initial directory(global and set in main)
-
-void execute_internal_command(command * C)
+void execute_internal_command(command * C, char inid[])
 {
 //Gets command and chooses the correct function
 	if(strcmp(C->argv[0],"mypwd")==0)
@@ -23,7 +21,7 @@ void execute_internal_command(command * C)
 		else if(strcmp(C->argv[0],"myrmdir")==0)
 		    myrmdir(C);
 		    else if(strcmp(C->argv[0],"mycd")==0)
-			mycd(C);
+			mycd(C,inid);
 			else if(strcmp(C->argv[0],"mycp")==0)
 			    mycp(C);
 			    else if(strcmp(C->argv[0],"myrm")==0)
@@ -81,7 +79,7 @@ void myrmdir(command *C)
 		printf("You have not specified a folder\n");
 }
 
-void mycd(command *C)
+void mycd(command *C, char inid[])
 {
 //Changes working directory to argumet. If no argument is given,
 //it'll return to initial working directory
@@ -90,11 +88,11 @@ void mycd(command *C)
 
 	if(C->argv[1]==NULL) //if there's no argument...
 	{
-		status = chdir(inid);//go to initial <- ASK WHY THIS WON'T WORK
+		status = chdir(inid);//go to initial
 	} 
 	else
 	{
-		status = chdir(C->argv[1]);//then go there
+		status = chdir(C->argv[1]);
 	}
 	if(status==-1)
 	{
@@ -140,7 +138,9 @@ void mycp(command * C)
 					else
 						printf("Copy done\n");
 				}
+				close(fd2);
 			}
+			close(fd1);
 		}
 	}
 }
@@ -153,14 +153,10 @@ void myrm(command * C)
 	else
 	{
 		int status;
-		char* dir = getpwd();//get location, NOT WORKING RIGHT
-		strcat(dir, "/");
-		strcat(dir, C->argv[1]);//add file
-		status = unlink(dir);//unlink
+		status = unlink(C->argv[1]);//unlink
 		if(status==-1)
 		{
 			printf("File failed to delete\n");
-			perror("Error\n");
 		}
 		else
 			printf("File probably deleted\n");//haha, because I unlinked
@@ -200,27 +196,48 @@ void myls(command * C)
 //Lists entries of directory specified
 //If there's no directory specified, uses current
 //If -l is entered, more info is displayed
+	bool l;//if there's -l or not
 	DIR *pDir;
-	struct dirent *pDirent;
-	pDir = opendir(getpwd());
+	struct dirent *pDirent;//structure of dir
+	if(C->argv[1]!=NULL)//are there args?
+	{
+		if(strcmp(C->argv[1],"-l")==0)//first arg is ls
+		{
+			l = true;
+			if(C->argv[2]==NULL)//no dir given
+				pDir = opendir(".");
+			else//dir given
+				pDir = opendir(C->argv[2]);
+		}
+		else //first arg is dir
+		{
+			pDir = opendir(C->argv[1]);
+			if(C->argv[2]==NULL)//no ls given
+				l = false;
+			else
+			{
+				if(strcmp(C->argv[2],"-l")==0)//is -l?
+					l = true;
+				else
+					l = false;
+			}
+		}
+	}
+	else //no argument given (current directory, no ls)
+	{
+			l = false;
+			pDir = opendir(".");//opens current directory
+	}
 	if (pDir == NULL)
-		printf("Cannot open directory");
+		printf("Cannot open directory\n");
 	else
 	{
 		while((pDirent = readdir(pDir)) != NULL)
 		{
-			printf("[%s]\n", pDirent->d_name);
+			printf("[%s] ", pDirent->d_name);
 		}
+	printf("\n");
 	closedir(pDir);
 	}
 }
 
-char* getpwd()
-{
-//Gets current directory and returns it. Internal use.
-	char buf[200];
-	char* cwd;
-
-	cwd = getcwd(buf, 200);
-	return cwd;
-}

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "parser.h"
 #include "internal_commands.h"
@@ -16,7 +17,8 @@ int main ()
     command C;
     int r;
     bool cont = true;
-    inid = getpwd(); //gets initial working directory
+    char inid[256];//get initial path
+    getcwd(inid, 256);
 
     printf ("Welcome to the Micro Shell!\n");
 
@@ -41,7 +43,8 @@ int main ()
 	    	else
 	    	{
             	    show_command (&C);
-	    	    execute_internal_command(&C);
+	    	    execute_internal_command(&C,inid);//pass comand and initial path
+		    //I could have made that path global but memory was unassigned
 	    	}
 	    }	
         free_command (&C);
