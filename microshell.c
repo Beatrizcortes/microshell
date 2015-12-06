@@ -42,7 +42,6 @@ int main ()
 	    	}
 	    	else
 	    	{
-            	    //show_command (&C);
 	    	    execute_internal_command(&C,inid);//pass comand and initial path
 		    //I could have made that path global but memory was unassigned
 	    	}
@@ -57,6 +56,8 @@ int main ()
 
 void show_command (command * C)
 {
+//used for debug but keeping it here just in case.
+//Came with the template
     int i;
 
     printf ("\tRaw command: \"%s\"\n", C->raw_command);

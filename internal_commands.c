@@ -1,3 +1,6 @@
+/*
+    internal_commands.c
+*/
 #include <stdio.h>
 #include <stdbool.h>
 #include <unistd.h>
@@ -16,6 +19,7 @@
 void execute_internal_command(command * C, char inid[])
 {
 //Gets command and chooses the correct function
+//All names are "my"+command
 	if(strcmp(C->argv[0],"mypwd")==0)
 	    mypwd(C);
 	    else if(strcmp(C->argv[0],"mymkdir")==0)
@@ -55,13 +59,14 @@ void mymkdir(command *C)
 	int status;
 	if(C->argv[1]!=NULL)
 	{
+		//Give permissions to everyone just in case
 		status = mkdir(C->argv[1], S_IRWXU | S_IRWXG | S_IRWXO);
 		if(status==-1)
 			printf("Error creating folder\n");
 		else
 			printf("Done creating folder \n");
 	}
-	else
+	else//argument for name wasn't given
 		printf("There's no name for the new folder.\n");
 }
 
@@ -91,14 +96,13 @@ void mycd(command *C, char inid[])
 	{
 		status = chdir(inid);//go to initial
 	} 
-	else
+	else//go to specified folder. Works for relative and absolute
 	{
 		status = chdir(C->argv[1]);
 	}
 	if(status==-1)
 	{
 		printf("Folder couldn't be changed\n");
-		perror("Error");
 	}
 	else
 		printf("Folder changed\n");
@@ -166,7 +170,7 @@ void myrm(command * C)
 
 void mycat(command * C)
 {
-//Print contant of file passed as argument
+//Print content of file passed as argument
 	if(C->argv[1]==NULL) //if there is no argument
 		printf("You haven't specified a file\n");
 	else
